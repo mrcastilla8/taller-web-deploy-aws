@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { mockEvents } from '../data/mockData'
 import EventCard from '../components/EventCard'
 import { isPastEvent } from '../utils/dateUtils'
 
 function MyEvents() {
-  const { student, openModal, inscriptions } = useApp()
+  const { student, openModal, inscriptions, events, favorites, loading, error, toggleFavorite } = useApp()
   const [activeTab, setActiveTab] = useState('upcoming') // 'upcoming' | 'past'
 
   // Obtiene solo los eventos en que el alumno está inscrito
-  const myEvents = mockEvents.filter((e) => inscriptions.includes(e.id))
+  const myEvents = events.filter((e) => inscriptions.includes(e.id))
 
   const upcoming = myEvents.filter((e) => !isPastEvent(e.date))
   const past     = myEvents.filter((e) => isPastEvent(e.date))
@@ -60,9 +59,10 @@ function MyEvents() {
           📚 Asistidos ({past.length})
         </button>
       </div>
+      {error && <p role="alert">{error}</p>}
 
       {/* Lista de eventos */}
-      {inscriptions.length === 0 ? (
+      {loading ? <p role="status">Cargando datos del servidor…</p> : inscriptions.length === 0 ? (
         <div className="empty-state">
           <span className="empty-state__icon" aria-hidden="true">📭</span>
           <h3>Aún no estás inscrito en ningún evento</h3>
@@ -108,6 +108,11 @@ function MyEvents() {
           ))}
         </div>
       )}
+
+      {!loading && <section className="detail-agenda">
+        <h3 className="detail-section-title">Mis favoritos ({favorites.length})</h3>
+        {favorites.length ? <div className="events-grid">{favorites.map((event) => <div key={event.id}><EventCard event={event} /><button className="btn btn--ghost" onClick={() => toggleFavorite(event.id).catch((err) => window.alert(err.message))}>Quitar de favoritos</button></div>)}</div> : <p>Aún no guardas eventos favoritos.</p>}
+      </section>}
 
     </div>
   )

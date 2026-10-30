@@ -1,8 +1,11 @@
 import { useEventFilter } from '../hooks/useEventFilter'
 import EventCard from '../components/EventCard'
 import FilterBar from '../components/FilterBar'
+import { useApp } from '../context/AppContext'
+import { API_BASE_URL } from '../services/api'
 
 function EventList() {
+  const { loading, error, refresh } = useApp()
   const {
     filters, setFilter, resetFilters,
     filteredEvents, activeCount, CATEGORIES,
@@ -49,8 +52,10 @@ function EventList() {
         categories={CATEGORIES}
       />
 
+      {error && <div role="alert" className="empty-state"><p>{error}</p><button className="btn btn--primary" onClick={refresh}>Reintentar</button></div>}
+
       {/* Grilla de eventos */}
-      {filteredEvents.length > 0 ? (
+      {loading ? <p role="status">Cargando eventos…</p> : filteredEvents.length > 0 ? (
         <div className="events-grid">
           {filteredEvents.map((event) => (
             <EventCard key={event.id} event={event} />
@@ -66,6 +71,12 @@ function EventList() {
           </button>
         </div>
       )}
+
+      <p className="text-muted text-center" style={{ marginTop: '2rem' }}>
+        <a href={`${API_BASE_URL.replace(/\/+$/, '').replace(/\/api$/, '')}/laboratorio.html`} target="_blank" rel="noreferrer">
+          Laboratorio de concurrencia y persistencia
+        </a>
+      </p>
 
     </div>
   )

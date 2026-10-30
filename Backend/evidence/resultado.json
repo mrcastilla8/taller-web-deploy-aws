@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-24T16:48:13.810Z",
-  "node": "v24.11.1",
+  "generatedAt": "2026-10-30T15:53:25.731Z",
+  "node": "v24.3.0",
   "storage": "SQLite en archivo temporal; conexión y servidor cerrados y reabiertos antes de consultar",
   "simulatedDelay": {
     "kind": "delay",
@@ -8,10 +8,10 @@
     "observed": {
       "path": "/api/health",
       "status": 200,
-      "requestId": "4738e114-f1ad-4fcb-8fae-c8dd1b160dde",
-      "sentMs": 30,
-      "completedMs": 60,
-      "elapsedMs": 30,
+      "requestId": "625e1b25-0cc8-4c02-9148-d9aa1f31acb6",
+      "sentMs": 12,
+      "completedMs": 25,
+      "elapsedMs": 13,
       "data": {
         "status": "ok",
         "storage": "sqlite",
@@ -23,10 +23,10 @@
       {
         "path": "/api/health",
         "status": 200,
-        "requestId": "317f2b0a-67aa-49bf-a923-c70e22f89c42",
-        "sentMs": 61,
-        "completedMs": 75,
-        "elapsedMs": 14,
+        "requestId": "2cafc995-343c-4e0d-be5c-9fb33dcf84f4",
+        "sentMs": 25,
+        "completedMs": 32,
+        "elapsedMs": 7,
         "data": {
           "status": "ok",
           "storage": "sqlite",
@@ -38,10 +38,10 @@
       {
         "path": "/api/categories",
         "status": 200,
-        "requestId": "3a32e43a-24f0-45cc-b9d4-522a22bf5694",
-        "sentMs": 61,
-        "completedMs": 76,
-        "elapsedMs": 15,
+        "requestId": "42480393-6374-4f96-a1e9-abda1625275d",
+        "sentMs": 25,
+        "completedMs": 32,
+        "elapsedMs": 7,
         "data": {
           "items": 6
         },
@@ -50,12 +50,12 @@
       {
         "path": "/api/events",
         "status": 200,
-        "requestId": "8af7f1f9-c3fd-43e6-866a-b7165d4e0ea7",
-        "sentMs": 62,
-        "completedMs": 79,
-        "elapsedMs": 17,
+        "requestId": "4c803339-7b4b-4f4d-ad76-d08ff83cbad7",
+        "sentMs": 26,
+        "completedMs": 36,
+        "elapsedMs": 10,
         "data": {
-          "items": 9
+          "items": 11
         },
         "completedWhileWaiting": true
       }
@@ -63,12 +63,12 @@
     "slow": {
       "path": "/api/events?delayMs=3000",
       "status": 200,
-      "requestId": "321ddfcc-7f50-4087-9afb-7611d89138c1",
+      "requestId": "2084aa88-7b55-4651-ac1d-3accae75d949",
       "sentMs": 0,
-      "completedMs": 3048,
-      "elapsedMs": 3048,
+      "completedMs": 3028,
+      "elapsedMs": 3028,
       "data": {
-        "items": 9
+        "items": 11
       }
     }
   },
@@ -78,10 +78,10 @@
     "observed": {
       "path": "/api/health",
       "status": 200,
-      "requestId": "3bd71a9e-8697-4f63-8ca9-28ef5db20f6f",
+      "requestId": "88916d53-2181-474b-aa90-8282400aa21a",
       "sentMs": 1,
-      "completedMs": 3,
-      "elapsedMs": 2,
+      "completedMs": 9,
+      "elapsedMs": 8,
       "data": {
         "status": "ok",
         "storage": "sqlite",
@@ -93,10 +93,10 @@
       {
         "path": "/api/health",
         "status": 200,
-        "requestId": "a42ae7f8-6222-43af-856e-d746ba694838",
-        "sentMs": 3,
-        "completedMs": 7,
-        "elapsedMs": 4,
+        "requestId": "3affdd23-7d1b-4bd7-8a15-9b2696a2ef08",
+        "sentMs": 9,
+        "completedMs": 17,
+        "elapsedMs": 8,
         "data": {
           "status": "ok",
           "storage": "sqlite",
@@ -108,10 +108,10 @@
       {
         "path": "/api/categories",
         "status": 200,
-        "requestId": "cbbf24f9-663f-4a4b-85f5-827cae4ec3cc",
-        "sentMs": 4,
-        "completedMs": 7,
-        "elapsedMs": 3,
+        "requestId": "a4b920cf-f63e-43bc-8852-316ed518734b",
+        "sentMs": 10,
+        "completedMs": 19,
+        "elapsedMs": 9,
         "data": {
           "items": 6
         },
@@ -121,15 +121,15 @@
     "slow": {
       "path": "/api/demo/orm?iterations=3000000",
       "status": 200,
-      "requestId": "f0ca156f-ca55-4fec-a876-03fb67e8a627",
+      "requestId": "aa8fd65f-2b56-4138-9d0a-ba603d2b2222",
       "sentMs": 0,
-      "completedMs": 792,
-      "elapsedMs": 792,
+      "completedMs": 1020,
+      "elapsedMs": 1020,
       "data": {
         "total": 4500001500000,
         "iterations": 3000000,
-        "timerTicks": 50,
-        "elapsedMs": 789
+        "timerTicks": 65,
+        "elapsedMs": 1015
       }
     }
   },
@@ -154,8 +154,8 @@
           "author": "Estudiante de Demostración",
           "rating": 5,
           "comment": "Valoración guardada con Sequelize y recuperada al reabrir SQLite.",
-          "createdAt": "2026-10-24T16:48:13.762Z",
-          "updatedAt": "2026-10-24T16:48:13.762Z"
+          "createdAt": "2026-10-30T15:53:25.665Z",
+          "updatedAt": "2026-10-30T15:53:25.665Z"
         }
       ]
     }
