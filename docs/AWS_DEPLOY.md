@@ -16,6 +16,19 @@ Use una sola región para EC2 y seleccione la región durante la creación. Comp
 
 SQLite se guarda en el volumen nombrado eventos_data sobre almacenamiento de EC2/EBS. Manténgalo durante las actualizaciones. No use docker compose down -v como procedimiento normal.
 
+### Si EC2 se detuvo y se volvió a iniciar
+
+Con una IPv4 pública asignada automáticamente, el DNS público de EC2 puede cambiar después de detener y volver a iniciar la instancia. Después del arranque, consulte en EC2 el nuevo campo Public IPv4 DNS (y la dirección IPv4 pública) en los detalles de la instancia; no reutilice el valor anterior por supuesto.
+
+Para actualizar CloudFront sin cambiar código:
+
+1. En CloudFront abra la distribución de la API y edite el origen EC2 existente.
+2. Reemplace Origin domain por el DNS público vigente que muestra EC2. Mantenga HTTP y el puerto 80, el comportamiento /api/*, el reenvío de headers/query strings y la política sin caché.
+3. Guarde el cambio y espere a que la distribución indique Deployed.
+4. Compruebe que el origen nuevo está permitido por el Security Group para tráfico de CloudFront en TCP 80. No abra el puerto a todo Internet.
+
+Después de reactivar la instancia, verifique: estado de instancia y status checks aprobados; volumen EBS conectado; Docker activo; servicio backend saludable con docker compose ps; GET /health y /api/ready localmente; CORS_ALLOWED_ORIGINS conserva la URL exacta de Amplify; origen CloudFront actualizado y desplegado; GET /api/health y /api/ready mediante el hostname CloudFront; y acceso desde Amplify en navegador a catálogo, perfil, inscripciones, favoritos y valoraciones. El volumen eventos_data debe seguir montado; no lo elimine ni lo recree.
+
 ## C. CloudFront para la API
 
 1. Cree una distribución con el DNS público real de EC2 como origen, protocolo HTTP y puerto 80.
@@ -54,5 +67,6 @@ Conserve .env y el volumen al actualizar. Haga respaldos antes de mantenimiento 
 - URL HTTPS de Amplify.
 - Origen HTTPS exacto de Amplify para CORS.
 - Estados de distribución y despliegue.
+- DNS público vigente de EC2 tras cada stop/start, si la IPv4 se asigna automáticamente.
 
 Obtenga estos valores en las consolas AWS; no hay URLs productivas inventadas en el repositorio.

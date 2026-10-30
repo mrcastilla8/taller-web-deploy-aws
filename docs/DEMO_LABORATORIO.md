@@ -12,6 +12,8 @@
 
 Abra /laboratorio.html desde el backend. Lance solicitudes concurrentes a /api/events?delayMs=3000 y, durante la espera, consulte /api/health y /api/events. Las lecturas rápidas deben terminar mientras la solicitud demorada sigue activa. El panel muestra tiempos. Consulte /api/demo/orm para trabajo de Sequelize y temporizadores. La opción de memoria se ejecuta desde Backend con npm run start:memory.
 
+El laboratorio es un cliente web independiente y guarda su UUID técnico bajo edu_session_id en localStorage. El frontend de Amplify y el laboratorio/backend tienen orígenes distintos (esquema, host o puerto); por la política del navegador, cada origen mantiene su propio localStorage. Por ello sus perfiles, favoritos e inscripciones pueden ser distintos. No se comparten identificadores ni tokens mediante URLs, y el UUID no es autenticación.
+
 ## Ejercicio 2: ORM y persistencia
 
 Use React para guardar perfil, inscripción, cancelación, favorito y valoración. Reinicie proceso o contenedor y confirme persistencia. GET /api/ready comprueba conexión real a la base.

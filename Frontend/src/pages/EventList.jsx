@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../services/api'
 
 function EventList() {
   const { loading, error, refresh } = useApp()
+  const loadFailed = Boolean(error) && !loading
   const {
     filters, setFilter, resetFilters,
     filteredEvents, activeCount, CATEGORIES,
@@ -30,13 +31,13 @@ function EventList() {
         <div className="page-header__stats">
           <div className="stat-pill">
             <span className="stat-pill__number">
-              {filteredEvents.filter((e) => e.date >= today).length}
+              {loading || loadFailed ? '—' : filteredEvents.filter((e) => e.date >= today).length}
             </span>
             <span className="stat-pill__label">Próximos</span>
           </div>
           <div className="stat-pill stat-pill--secondary">
             <span className="stat-pill__number">
-              {filteredEvents.filter((e) => e.date < today).length}
+              {loading || loadFailed ? '—' : filteredEvents.filter((e) => e.date < today).length}
             </span>
             <span className="stat-pill__label">Realizados</span>
           </div>
@@ -52,10 +53,15 @@ function EventList() {
         categories={CATEGORIES}
       />
 
-      {error && <div role="alert" className="empty-state"><p>{error}</p><button className="btn btn--primary" onClick={refresh}>Reintentar</button></div>}
-
       {/* Grilla de eventos */}
-      {loading ? <p role="status">Cargando eventos…</p> : filteredEvents.length > 0 ? (
+      {loading ? <p role="status">Cargando eventos…</p> : loadFailed ? (
+        <div className="empty-state" role="alert">
+          <span className="empty-state__icon" aria-hidden="true">⚠️</span>
+          <h3>No se pudieron cargar los eventos</h3>
+          <p>{error}</p>
+          <button className="btn btn--primary" onClick={refresh}>Reintentar</button>
+        </div>
+      ) : filteredEvents.length > 0 ? (
         <div className="events-grid">
           {filteredEvents.map((event) => (
             <EventCard key={event.id} event={event} />
