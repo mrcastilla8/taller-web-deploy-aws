@@ -205,3 +205,15 @@ export const mockEvents = [
     agenda: null,
   },
 ]
+
+// Semillas de demostración para bases nuevas. Las fechas se calculan en UTC y
+// bulkCreate(ignoreDuplicates) las conserva intactas en bases ya inicializadas.
+const futureDate = (days) => {
+  const date = new Date()
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+mockEvents.push(
+  { ...mockEvents[0], id: 10, title: 'Taller de Arquitectura de Software', description: 'Patrones de diseño, modularidad y decisiones arquitectónicas para sistemas académicos.', date: futureDate(30), time: '10:00', speaker: 'Ing. Mariana Salazar', category: 'Tecnología', capacity: 45, enrolled: 0, location: 'Laboratorio de Ingeniería de Software', agenda: null },
+  { ...mockEvents[7], id: 11, title: 'Seminario de Ciencia de Datos Aplicada', description: 'Métodos reproducibles para analizar datos y comunicar hallazgos en proyectos universitarios.', date: futureDate(45), time: '09:00', speaker: 'Dr. Javier Paredes', category: 'Ciencias', capacity: 60, enrolled: 0, location: 'Auditorio de la Facultad', agenda: null },
+)

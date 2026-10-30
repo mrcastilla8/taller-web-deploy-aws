@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { mockEvents } from '../data/mockData'
 import EventCard from '../components/EventCard'
 import { isPastEvent } from '../utils/dateUtils'
 
 function MyEvents() {
-  const { student, openModal, inscriptions } = useApp()
+  const { student, openModal, inscriptions, events, favorites, loading, error, refresh, toggleFavorite } = useApp()
+  const loadFailed = Boolean(error) && !loading
   const [activeTab, setActiveTab] = useState('upcoming') // 'upcoming' | 'past'
 
   // Obtiene solo los eventos en que el alumno está inscrito
-  const myEvents = mockEvents.filter((e) => inscriptions.includes(e.id))
+  const myEvents = events.filter((e) => inscriptions.includes(e.id))
 
   const upcoming = myEvents.filter((e) => !isPastEvent(e.date))
   const past     = myEvents.filter((e) => isPastEvent(e.date))
@@ -31,11 +31,11 @@ function MyEvents() {
         </div>
         <div className="page-header__stats">
           <div className="stat-pill">
-            <span className="stat-pill__number">{upcoming.length}</span>
+            <span className="stat-pill__number">{loading || loadFailed ? '—' : upcoming.length}</span>
             <span className="stat-pill__label">Próximos</span>
           </div>
           <div className="stat-pill stat-pill--secondary">
-            <span className="stat-pill__number">{past.length}</span>
+            <span className="stat-pill__number">{loading || loadFailed ? '—' : past.length}</span>
             <span className="stat-pill__label">Asistidos</span>
           </div>
         </div>
@@ -49,7 +49,7 @@ function MyEvents() {
           className={`tab ${activeTab === 'upcoming' ? 'tab--active' : ''}`}
           onClick={() => setActiveTab('upcoming')}
         >
-          📆 Próximos ({upcoming.length})
+          📆 Próximos ({loading || loadFailed ? '—' : upcoming.length})
         </button>
         <button
           role="tab"
@@ -57,12 +57,18 @@ function MyEvents() {
           className={`tab ${activeTab === 'past' ? 'tab--active' : ''}`}
           onClick={() => setActiveTab('past')}
         >
-          📚 Asistidos ({past.length})
+          📚 Asistidos ({loading || loadFailed ? '—' : past.length})
         </button>
       </div>
-
       {/* Lista de eventos */}
-      {inscriptions.length === 0 ? (
+      {loading ? <p role="status">Cargando datos del servidor…</p> : loadFailed ? (
+        <div className="empty-state" role="alert">
+          <span className="empty-state__icon" aria-hidden="true">⚠️</span>
+          <h3>No se pudieron cargar tus eventos</h3>
+          <p>{error}</p>
+          <button className="btn btn--primary" onClick={refresh}>Reintentar</button>
+        </div>
+      ) : inscriptions.length === 0 ? (
         <div className="empty-state">
           <span className="empty-state__icon" aria-hidden="true">📭</span>
           <h3>Aún no estás inscrito en ningún evento</h3>
@@ -108,6 +114,11 @@ function MyEvents() {
           ))}
         </div>
       )}
+
+      {!loading && !loadFailed && <section className="detail-agenda">
+        <h3 className="detail-section-title">Mis favoritos ({favorites.length})</h3>
+        {favorites.length ? <div className="events-grid">{favorites.map((event) => <div key={event.id}><EventCard event={event} /><button className="btn btn--ghost" onClick={() => toggleFavorite(event.id).catch((err) => window.alert(err.message))}>Quitar de favoritos</button></div>)}</div> : <p>Aún no guardas eventos favoritos.</p>}
+      </section>}
 
     </div>
   )

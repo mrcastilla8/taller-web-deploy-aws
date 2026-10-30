@@ -8,6 +8,7 @@ function StudentModal() {
 
   const [form, setForm] = useState({ name: '', email: '', phone: '' })
   const [errors, setErrors] = useState({})
+  const [submitting, setSubmitting] = useState(false)
 
   // Pre-rellena el formulario al abrir si ya hay datos del estudiante
   useEffect(() => {
@@ -48,18 +49,19 @@ function StudentModal() {
     return newErrors
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const newErrors = validate()
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       return
     }
-    confirmRegistration({
+    setSubmitting(true)
+    try { await confirmRegistration({
       name:  form.name.trim(),
       email: form.email.trim().toLowerCase(),
       phone: form.phone.trim(),
-    })
+    }) } catch (error) { setErrors((prev) => ({ ...prev, form: error.message })) } finally { setSubmitting(false) }
   }
 
   const handleOverlayClick = (e) => {
@@ -101,6 +103,7 @@ function StudentModal() {
 
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="modal__body" noValidate>
+          {errors.form && <p role="alert" className="field-error">{errors.form}</p>}
 
           <div className="form-group">
             <label htmlFor="student-name" className="form-label">
@@ -162,8 +165,7 @@ function StudentModal() {
 
           {/* Aviso de privacidad */}
           <p className="modal__privacy">
-            🔒 Tus datos se guardan solo en este dispositivo y se usan únicamente
-            para gestionar tus inscripciones.
+            🔒 Tus datos se guardan en el servidor para gestionar tu perfil y tus inscripciones.
           </p>
 
           {/* Acciones */}
@@ -175,11 +177,11 @@ function StudentModal() {
             >
               Cancelar
             </button>
-            <button type="submit" className="btn btn--primary">
+            <button type="submit" disabled={submitting} className="btn btn--primary">
               {isEditing
                 ? 'Guardar cambios'
                 : pendingEventId
-                  ? 'Guardar e inscribirme'
+                  ? submitting ? 'Guardando…' : 'Guardar e inscribirme'
                   : 'Guardar datos'}
             </button>
           </div>

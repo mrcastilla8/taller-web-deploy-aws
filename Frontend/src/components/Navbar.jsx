@@ -59,9 +59,9 @@ function Navbar() {
                 Editar
               </button>
               <button
-                onClick={clearStudent}
+                onClick={() => clearStudent().catch((error) => window.alert(error.message))}
                 className="btn btn--ghost btn--sm navbar__exit-btn"
-                title="Borrar mis datos de este dispositivo"
+                title="Borrar mi perfil y mis datos asociados"
               >
                 ✕
               </button>

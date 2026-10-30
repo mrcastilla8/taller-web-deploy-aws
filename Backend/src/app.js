@@ -19,6 +19,18 @@ function integer(value, min, max, label) {
 
 export function createApp(db, { log = console.log } = {}) {
   const app = express()
+  const allowedOrigins = new Set((process.env.CORS_ALLOWED_ORIGINS ?? 'http://localhost:5173').split(',').map((origin) => origin.trim()).filter((origin) => origin && origin !== '*'))
+  app.use((req, res, next) => {
+    const origin = req.get('Origin')
+    if (origin && allowedOrigins.has(origin)) {
+      res.set('Access-Control-Allow-Origin', origin)
+      res.set('Vary', 'Origin')
+      res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+      res.set('Access-Control-Allow-Headers', 'Content-Type, X-Session-Id')
+    }
+    if (req.method === 'OPTIONS') return res.sendStatus(origin && !allowedOrigins.has(origin) ? 403 : 204)
+    next()
+  })
   let pendingDelays = 0
   let pendingQueries = 0
   app.disable('x-powered-by')
@@ -44,6 +56,8 @@ export function createApp(db, { log = console.log } = {}) {
   }
   const eventId = (req) => integer(req.params.id, 1, 2147483647, 'El ID del evento')
   const state = async (req, res) => res.json(await db.state(session(req)))
+
+  app.get('/health', (req, res) => res.json({ status: 'ok' }))
 
   app.get('/api/health', (req, res) => res.json({
     status: 'ok', storage: db.dialect === 'postgres' ? 'postgres' : db.storage === ':memory:' ? 'memory' : 'sqlite',

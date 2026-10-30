@@ -1,16 +1,46 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { mockEvents } from '../data/mockData'
+import { api } from '../services/api'
 import { formatDate, formatTime, getDayName, isPastEvent } from '../utils/dateUtils'
 
 function EventDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isInscribed, inscribe, cancelInscription } = useApp()
+  const { isInscribed, inscribe, cancelInscription, events, favorites, toggleFavorite, student, loading, error: loadError, refresh } = useApp()
+  const [reviews, setReviews] = useState(null)
+  const [reviewsLoading, setReviewsLoading] = useState(true)
+  const [reviewsError, setReviewsError] = useState('')
+  const [reviewsAttempt, setReviewsAttempt] = useState(0)
+  const [rating, setRating] = useState(5)
+  const [comment, setComment] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
-  const event = mockEvents.find((e) => e.id === Number(id))
+  const event = events.find((e) => e.id === Number(id))
+  useEffect(() => {
+    let active = true
+    setReviewsLoading(true)
+    setReviewsError('')
+    api(`events/${id}/reviews`)
+      .then((data) => { if (active) setReviews(data) })
+      .catch((err) => { if (active) setReviewsError(err.message) })
+      .finally(() => { if (active) setReviewsLoading(false) })
+    return () => { active = false }
+  }, [id, reviewsAttempt])
 
   // Evento no encontrado
+  if (!event && loading) return <div className="page" role="status">Cargando evento…</div>
+  if (!event && loadError) return (
+    <div className="page">
+      <div className="empty-state" role="alert">
+        <span className="empty-state__icon" aria-hidden="true">⚠️</span>
+        <h3>No se pudo cargar el evento</h3>
+        <p>{loadError}</p>
+        <button className="btn btn--primary" onClick={refresh}>Reintentar</button>
+      </div>
+    </div>
+  )
   if (!event) {
     return (
       <div className="page">
@@ -26,18 +56,18 @@ function EventDetail() {
 
   const past        = isPastEvent(event.date)
   const inscribed   = isInscribed(event.id)
-  const totalEnrolled = event.enrolled + (inscribed ? 1 : 0)
+  const totalEnrolled = event.enrolled
   const isFull      = totalEnrolled >= event.capacity
   const spotsLeft   = event.capacity - totalEnrolled
   const fillPercent = Math.min((totalEnrolled / event.capacity) * 100, 100)
 
-  const handleInscribe = () => inscribe(event.id)
-  const handleCancel   = () => {
-    cancelInscription(event.id)
-  }
+  const handleInscribe = async () => { setBusy(true); setError(''); try { await inscribe(event.id) } catch (err) { setError(err.message) } finally { setBusy(false) } }
+  const handleCancel = async () => { setBusy(true); setError(''); try { await cancelInscription(event.id) } catch (err) { setError(err.message) } finally { setBusy(false) } }
+  const submitReview = async (e) => { e.preventDefault(); setBusy(true); setError(''); try { setReviews(await api(`events/${id}/reviews`, { method: 'PUT', body: { rating: Number(rating), comment } })); setComment('') } catch (err) { setError(err.message) } finally { setBusy(false) } }
 
   return (
     <div className="page">
+      {loadError && <div className="empty-state" role="alert"><p>No se pudo actualizar la información del servidor. {loadError}</p><button className="btn btn--primary" onClick={refresh}>Reintentar</button></div>}
 
       {/* Botón volver */}
       <button onClick={() => navigate(-1)} className="back-btn">
@@ -48,6 +78,10 @@ function EventDetail() {
 
         {/* Columna principal */}
         <article className="detail-main">
+          {error && <p role="alert" className="field-error">{error}</p>}
+          <button className="btn btn--outline" disabled={busy} onClick={() => toggleFavorite(event.id).catch((err) => setError(err.message))}>
+            {favorites.some((item) => item.id === event.id) ? '♥ Guardado en favoritos' : '♡ Agregar a favoritos'}
+          </button>
 
           {/* Encabezado */}
           <div className="detail-header">
@@ -184,14 +218,14 @@ function EventDetail() {
                       <span className="inscription-confirm__icon">✅</span>
                       <p>¡Estás inscrito en este evento!</p>
                     </div>
-                    <button onClick={handleCancel} className="btn btn--danger btn--block">
+                    <button disabled={busy} onClick={handleCancel} className="btn btn--danger btn--block">
                       Cancelar inscripción
                     </button>
                   </>
                 ) : (
                   <button
                     onClick={handleInscribe}
-                    disabled={isFull}
+                    disabled={isFull || busy}
                     className="btn btn--primary btn--block"
                   >
                     {isFull ? 'Sin cupos disponibles' : 'Inscribirme en este evento'}
@@ -211,6 +245,14 @@ function EventDetail() {
 
         </aside>
       </div>
+      <section className="detail-agenda">
+        <h3 className="detail-section-title">Valoraciones {reviews && `· ${reviews.average ? reviews.average.toFixed(1) : '—'} / 5 · ${reviews.count}`}</h3>
+        {reviewsLoading && <p role="status">Cargando valoraciones…</p>}
+        {reviewsError && <div role="alert"><p>No se pudieron cargar las valoraciones. {reviewsError}</p><button className="btn btn--primary" onClick={() => setReviewsAttempt((attempt) => attempt + 1)}>Reintentar</button></div>}
+        {!reviewsLoading && !reviewsError && reviews?.count === 0 && <p>Aún no hay valoraciones.</p>}
+        {reviews?.reviews?.map((review, index) => <article key={`${review.createdAt}-${index}`}><strong>{review.author} · {review.rating}/5</strong><p>{review.comment}</p></article>)}
+        {student ? <form onSubmit={submitReview} className="modal__body"><label className="form-label">Puntuación <select value={rating} onChange={(e) => setRating(e.target.value)}>{[1,2,3,4,5].map((n) => <option key={n} value={n}>{n}</option>)}</select></label><label className="form-label">Comentario<textarea required minLength="3" maxLength="1000" value={comment} onChange={(e) => setComment(e.target.value)} /></label><button className="btn btn--primary" disabled={busy}>Guardar valoración</button></form> : <p>Identifícate para dejar una valoración.</p>}
+      </section>
     </div>
   )
 }

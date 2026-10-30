@@ -1,25 +1,29 @@
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { formatDate, formatTime, getDayName, isPastEvent } from '../utils/dateUtils'
 
 // Tarjeta de evento para la grilla principal y lista de Mis Eventos
 function EventCard({ event, showCancelBtn = false }) {
   const { isInscribed, inscribe, cancelInscription } = useApp()
+  const [pending, setPending] = useState(false)
 
   const past        = isPastEvent(event.date)
   const inscribed   = isInscribed(event.id)
-  const totalEnrolled = event.enrolled + (inscribed ? 1 : 0)
+  const totalEnrolled = event.enrolled
   const isFull      = totalEnrolled >= event.capacity
   const spotsLeft   = event.capacity - totalEnrolled
 
   const handleInscribe = (e) => {
     e.preventDefault() // no navegar al hacer clic en el botón dentro del link
-    inscribe(event.id)
+    setPending(true)
+    inscribe(event.id).catch((error) => window.alert(error.message)).finally(() => setPending(false))
   }
 
   const handleCancel = (e) => {
     e.preventDefault()
-    cancelInscription(event.id)
+    setPending(true)
+    cancelInscription(event.id).catch((error) => window.alert(error.message)).finally(() => setPending(false))
   }
 
   return (
@@ -91,7 +95,7 @@ function EventCard({ event, showCancelBtn = false }) {
 
           {/* Botón cancelar (vista Mis Eventos) */}
           {showCancelBtn && !past && inscribed && (
-            <button onClick={handleCancel} className="btn btn--danger btn--sm">
+            <button onClick={handleCancel} disabled={pending} className="btn btn--danger btn--sm">
               Cancelar
             </button>
           )}
@@ -100,7 +104,7 @@ function EventCard({ event, showCancelBtn = false }) {
           {!showCancelBtn && !past && !inscribed && (
             <button
               onClick={handleInscribe}
-              disabled={isFull}
+              disabled={isFull || pending}
               className="btn btn--primary btn--sm"
             >
               {isFull ? 'Cupo lleno' : 'Inscribirme'}

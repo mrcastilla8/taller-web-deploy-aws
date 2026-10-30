@@ -1,147 +1,39 @@
-# EventosFISI — Eventos Académicos
+# EventosFISI frontend
 
-Aplicación web (SPA) para que los estudiantes exploren los eventos académicos del mes, consulten su detalle y gestionen sus inscripciones.
+Aplicación SPA React 19 y Vite 8 para explorar eventos académicos y gestionar perfil, inscripciones, favoritos y valoraciones con la API Express.
 
-Es un proyecto **solo frontend**: los eventos se cargan desde datos de prueba locales y la información del estudiante se guarda en el navegador (`localStorage`). No requiere backend ni base de datos.
+## Desarrollo local
 
-## Tecnologías
+    npm ci
+    npm run dev
 
-| Herramienta | Uso |
-|---|---|
-| [React 19](https://react.dev) | Interfaz de usuario basada en componentes |
-| [React Router 7](https://reactrouter.com) | Navegación entre vistas (SPA) |
-| [Vite 8](https://vite.dev) | Servidor de desarrollo y empaquetado |
-| CSS plano | Estilos globales en `src/index.css` |
+Vite sirve la aplicación en localhost:5173 y reenvía /api al backend en localhost:3001. Configure VITE_API_BASE_URL en .env si la API tiene otra dirección. En producción se configura durante la compilación; el valor predeterminado es /api.
 
 ## Funcionalidades
 
-### Eventos del mes (`/`)
-- Grilla de tarjetas con categoría, costo, fecha, hora, expositor, lugar y barra de cupos.
-- Contadores de eventos **próximos** y **realizados**.
-- **Filtros combinables:**
-  - búsqueda por título, expositor o categoría;
-  - categoría (Tecnología, Ciencias, Negocios, Humanidades, Salud, Arte y Cultura);
-  - estado (todos, próximos, realizados);
-  - costo (todos, gratuitos, de pago);
-  - botón para limpiar los filtros activos.
-- Inscripción directa desde la tarjeta. El botón se deshabilita si no quedan cupos.
+- Eventos y categorías cargados desde el servidor con búsqueda, categoría, costo y estado.
+- Detalles, cupos, inscripción y cancelación desde la API.
+- Modal de perfil que completa la inscripción pendiente solo tras confirmar el guardado del servidor.
+- Mis Eventos con pestañas de próximos y pasados y una sección de favoritos.
+- Valoraciones con promedio, cantidad, puntuación 1–5 y comentario.
+- Manejo de carga, errores HTTP y reintento.
+- localStorage conserva solamente el UUID técnico de sesión generado por el navegador.
 
-### Detalle del evento (`/eventos/:id`)
-- Descripción completa y **agenda** por sesiones.
-- Panel lateral con fecha, hora, lugar, expositor (con su biografía), costo y ocupación.
-- Inscripción o cancelación de la inscripción.
-- Mensaje de "Evento no encontrado" si el ID no existe.
+La clave de sesión no es autenticación. Los datos de negocio se recuperan del backend; mockData.js no es fuente autoritativa de la aplicación.
 
-### Mis eventos (`/mis-eventos`)
-- Lista de los eventos en los que el estudiante está inscrito, separada en pestañas **Próximos** y **Asistidos**.
-- Cancelación de inscripciones de eventos que aún no se realizan.
-- Contador de inscripciones en la barra de navegación.
+## Compilación Amplify
 
-### Identificación del estudiante
-- Modal con nombre, correo institucional y teléfono.
-- Validaciones:
-  - nombre de 3 caracteres como mínimo;
-  - correo `@unmsm.edu.pe` o `@universidad.edu.pe`;
-  - teléfono de 7 a 15 dígitos.
-- Si un estudiante no identificado intenta inscribirse, se abre el modal y, al guardar sus datos, queda inscrito automáticamente en ese evento.
-- Desde la barra de navegación se pueden editar los datos o borrarlos del dispositivo. Al borrarlos también se eliminan las inscripciones.
+    npm ci
+    npm run build
 
-> Las fechas pasadas se calculan comparando con la fecha actual del sistema. Un evento pasado no admite inscripciones.
+Amplify usa la raíz Frontend del monorepo y publica dist. Configure VITE_API_BASE_URL con la URL real de CloudFront más /api. Si cambia, vuelva a compilar y desplegar.
 
-## Arquitectura
+## Archivos principales
 
-```
-src/
-├── main.jsx              # Punto de entrada: monta <App /> en #root
-├── App.jsx               # Proveedor de contexto + definición de rutas
-├── index.css             # Estilos globales
-├── context/
-│   └── AppContext.jsx    # Estado global: estudiante, inscripciones y modal
-├── hooks/
-│   └── useEventFilter.js # Lógica de filtrado de eventos
-├── pages/                # Vistas asociadas a una ruta
-│   ├── EventList.jsx
-│   ├── EventDetail.jsx
-│   └── MyEvents.jsx
-├── components/           # Componentes reutilizables
-│   ├── Layout.jsx        # Navbar + <Outlet /> para las páginas
-│   ├── Navbar.jsx
-│   ├── EventCard.jsx
-│   ├── FilterBar.jsx
-│   └── StudentModal.jsx
-├── data/
-│   └── mockData.js       # Eventos y categorías de prueba
-└── utils/
-    └── dateUtils.js      # Formato de fechas/horas (locale es-PE)
-```
-
-### Flujo de componentes
-
-```mermaid
-flowchart TD
-    App --> AppProvider
-    AppProvider --> Router[BrowserRouter]
-    Router --> Layout
-    Router --> StudentModal
-    Layout --> Navbar
-    Layout --> EventList
-    Layout --> EventDetail
-    Layout --> MyEvents
-    EventList --> FilterBar
-    EventList --> EventCard
-    MyEvents --> EventCard
-    EventList -. usa .-> useEventFilter
-    useEventFilter -. lee .-> mockData
-    EventDetail -. lee .-> mockData
-    MyEvents -. lee .-> mockData
-```
-
-### Decisiones principales
-
-- **Estado global con Context API.** `AppContext` centraliza el perfil del estudiante, la lista de IDs de eventos inscritos y el estado del modal. Los componentes acceden a él con el hook `useApp()`, que lanza un error si se usa fuera de `<AppProvider>`.
-- **Persistencia en `localStorage`.** Se usan las claves `edu_student` y `edu_inscriptions`. El estado se inicializa de forma perezosa leyendo esas claves, así que los datos se mantienen al recargar la página.
-- **Lógica separada de la vista.** El filtrado vive en el hook `useEventFilter` (memoizado con `useMemo`), y `FilterBar` solo recibe el estado y los *setters* por props.
-- **Layout con rutas anidadas.** `Layout` comparte la barra de navegación entre todas las páginas mediante `<Outlet />`. Cualquier ruta desconocida redirige a `/`.
-- **Modal global.** `StudentModal` se renderiza una sola vez fuera de las rutas y se abre desde cualquier parte con `openModal(eventId?)`. Si recibe un `eventId`, la inscripción a ese evento queda pendiente hasta que el estudiante confirme sus datos.
-- **Datos simulados.** `mockData.js` reemplaza a una API. Para conectar un backend real bastaría con sustituir las lecturas de `mockEvents` por llamadas HTTP.
-
-## Cómo ejecutar el proyecto
-
-Requisitos: **Node.js 20.19+ o 22.12+** y npm.
-
-```bash
-npm install      # instalar dependencias (solo la primera vez)
-npm run dev      # servidor de desarrollo en http://localhost:5173
-```
-
-Otros scripts:
-
-```bash
-npm run build    # genera la versión de producción en dist/
-npm run preview  # sirve localmente la versión de producción
-```
-
-## Datos de prueba
-
-Los eventos se definen en [`src/data/mockData.js`](src/data/mockData.js). Cada evento tiene esta forma:
-
-```js
-{
-  id: 1,
-  title: 'Introducción a la Inteligencia Artificial',
-  description: '...',
-  date: '2026-10-03',        // YYYY-MM-DD
-  time: '10:00',             // HH:mm
-  speaker: 'Dr. Carlos Mendoza',
-  speakerBio: '...',
-  category: 'Tecnología',    // una de CATEGORIES
-  isFree: true,
-  cost: 0,                   // en soles (S/)
-  capacity: 100,
-  enrolled: 98,              // inscritos previos (simulados)
-  location: 'Auditorio Principal — Pabellón A',
-  agenda: [{ session: 'Sesión 1', time: '10:00', topic: '...' }],
-}
-```
-
-Para identificarte en la aplicación usa cualquier correo que termine en `@unmsm.edu.pe`, por ejemplo `u202100001@unmsm.edu.pe`.
+- src/services/api.js: cliente HTTP, errores, timeout y sesión.
+- src/context/AppContext.jsx: estado recibido del backend y operaciones.
+- src/hooks/useEventFilter.js: filtros existentes sobre el catálogo real.
+- src/pages/EventDetail.jsx: detalle, inscripción, favoritos y valoraciones.
+- src/pages/MyEvents.jsx: inscripciones y favoritos.
+- src/components/StudentModal.jsx: identificación y operación asíncrona.
+- src/data/mockData.js: referencia histórica, no fuente de datos en ejecución.
